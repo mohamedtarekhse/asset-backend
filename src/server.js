@@ -14,11 +14,13 @@ app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: '*',
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
-  credentials: true,
+  credentials: false,   // must be false when origin is '*'
 }));
+// Handle preflight for all routes
+app.options('*', cors());
 
 // ── RATE LIMITING ────────────────────────────────────────────
 app.use('/api/auth/login', rateLimit({
