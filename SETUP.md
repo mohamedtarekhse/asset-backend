@@ -23,6 +23,8 @@ DATABASE_URL=postgres://postgres.XXXX:PASSWORD@aws-0-eu-west-1.pooler.supabase.c
 JWT_SECRET=a3f8c2d1e4b5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1
 NODE_ENV=production
 PORT=5000
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
 
 ## ─────────────────────────────────────────
 ## STEP 2 — Install Packages
@@ -81,6 +83,8 @@ Test it works — open browser:
    JWT_SECRET    = (same as your .env)
    NODE_ENV      = production
    FRONTEND_URL  = https://your-netlify-site.netlify.app
+   OPENAI_API_KEY = sk-...
+   OPENAI_MODEL   = gpt-4o-mini
 
 ## ─────────────────────────────────────────
 ## LOGIN CREDENTIALS (after seeding)
@@ -113,3 +117,4 @@ GET    /api/companies            List companies
 GET    /api/users                List users
 GET    /api/notifications        Get notifications
 POST   /api/email/send           Send email alert
+POST   /api/ai/chat              Ask AI assistant

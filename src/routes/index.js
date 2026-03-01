@@ -9,6 +9,7 @@ const assets = require('../controllers/assetController');
 const bom    = require('../controllers/bomController');
 const email  = require('../controllers/emailController');
 const notif  = require('../controllers/notificationController');
+const chat   = require('../controllers/chatController');
 const res_   = require('../controllers/resourceControllers');
 
 // ── AUTH ─────────────────────────────────────────────────────
@@ -65,5 +66,8 @@ router.delete('/notifications/:id',      authenticate, notif.remove);
 // ── EMAIL ────────────────────────────────────────────────────
 router.post('/email/send', authenticate, email.sendAlert);
 router.get ('/email/logs', authenticate, authorize('admin','manager'), email.getLogs);
+
+// ── AI ASSISTANT ───────────────────────────────────────────
+router.post('/ai/chat', authenticate, chat.askAssistant);
 
 module.exports = router;

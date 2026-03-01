@@ -720,6 +720,106 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 }
 .user-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
+
+
+/* ── AI CHATBOX ── */
+.chat-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sap-blue);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 1800;
+}
+.chat-fab:hover { background: var(--sap-blue-dark); }
+.chat-panel {
+  position: fixed;
+  right: 22px;
+  bottom: 88px;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: #fff;
+  border: 1px solid var(--sap-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1800;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-panel.open { display: flex; }
+.chat-header {
+  background: var(--sap-shell);
+  color: #fff;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-header h3 { flex: 1; font-size: 14px; font-weight: 600; }
+.chat-meta {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--sap-border);
+  display: flex;
+  gap: 6px;
+}
+.chat-meta .form-input { font-size: 12px; padding: 6px 8px; }
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  background: #F9FAFB;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-msg {
+  max-width: 90%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--sap-blue);
+  color: #fff;
+}
+.chat-msg.assistant {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--sap-border);
+}
+.chat-msg.error {
+  align-self: flex-start;
+  background: #FDECEA;
+  border: 1px solid #F3C1BA;
+  color: #8A1F17;
+}
+.chat-input-wrap {
+  border-top: 1px solid var(--sap-border);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  background: #fff;
+}
+.chat-input-wrap textarea {
+  min-height: 60px;
+  max-height: 120px;
+  resize: vertical;
+}
+
 /* Responsive */
 @media (max-width: 700px) {
   .kpi-row { grid-template-columns: 1fr 1fr; }
@@ -788,6 +888,31 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   </div>
   <div class="notif-list" id="notifList"></div>
 </div>
+
+<!-- AI CHATBOX -->
+<button class="chat-fab" id="chatFab" onclick="toggleChatPanel()" title="AI Assistant">
+  <i class="fas fa-robot"></i>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <i class="fas fa-robot"></i>
+    <h3>ERP AI Assistant</h3>
+    <button class="shell-btn" style="width:28px;height:28px" onclick="toggleChatPanel()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="chat-meta">
+    <input class="form-input" id="chatToken" type="password" placeholder="Bearer token (optional)">
+    <input class="form-input" id="chatModel" type="text" value="gpt-4o-mini" style="width:110px">
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg assistant">Hi 👋 I can help with assets, procurement, maintenance, and ERP process questions.</div>
+  </div>
+  <div class="chat-input-wrap">
+    <textarea class="form-textarea" id="chatInput" placeholder="Ask a question... (e.g., summarize overdue maintenance by rig)"></textarea>
+    <button class="btn btn-primary" id="chatSendBtn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i> Send</button>
+  </div>
+</div>
+
 
 <!-- MAIN PAGE -->
 <div class="page">
@@ -4243,6 +4368,78 @@ window.addEventListener('DOMContentLoaded', () => {
     renderAssetRigSelector();
     renderMaintRigSelector();
   }, 150);
+});
+
+
+// ══════════════════════════════════
+//  AI CHATBOX
+// ══════════════════════════════════
+function toggleChatPanel() {
+  const panel = document.getElementById('chatPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('chatInput').focus();
+  }
+}
+
+function appendChatMessage(role, text) {
+  const wrap = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  div.textContent = text;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  const tokenEl = document.getElementById('chatToken');
+  const modelEl = document.getElementById('chatModel');
+
+  const message = input.value.trim();
+  if (!message) return;
+
+  appendChatMessage('user', message);
+  input.value = '';
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending';
+
+  const token = tokenEl.value.trim() || localStorage.getItem('erpAuthToken') || '';
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        message,
+        model: modelEl.value.trim() || 'gpt-4o-mini'
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      appendChatMessage('error', data.message || 'AI request failed.');
+    } else {
+      appendChatMessage('assistant', data.response || '(No response)');
+    }
+  } catch (err) {
+    appendChatMessage('error', err.message || 'Network error while calling AI endpoint.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  const panel = document.getElementById('chatPanel');
+  if (!panel || !panel.classList.contains('open')) return;
+  if (e.key === 'Enter' && !e.shiftKey && document.activeElement === document.getElementById('chatInput')) {
+    e.preventDefault();
+    sendChatMessage();
+  }
 });
 
 </script>
