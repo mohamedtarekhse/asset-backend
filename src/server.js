@@ -56,6 +56,7 @@ app.get('/', (req, res) => {
       rigs:      '/api/rigs',
       companies: '/api/companies',
       users:     '/api/users',
+      aiChat:    '/api/ai/chat',
     }
   });
 });
